@@ -1,0 +1,7 @@
+{
+  "name": "Pliegue · Estudio Creativo",
+  "description": "Dirección de arte, 3D y experiencias inmersivas para marcas que quieren sumergir a su público.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
