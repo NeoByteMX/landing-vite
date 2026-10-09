@@ -2,16 +2,12 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copiamos package.json y package-lock.json (si existe)
 COPY package*.json ./
 
-# Si tienes package-lock.json usa npm ci, si solo tienes package.json usa npm install
-RUN npm install
+# Usamos --legacy-peer-deps para evitar conflictos entre Vite y Tailwind
+RUN npm install --legacy-peer-deps
 
-# Copiamos el resto del código
 COPY . .
-
-# Compilamos la aplicación de Vite
 RUN npm run build
 
 # --- Etapa 2: Servidor Nginx ---
