@@ -7,22 +7,10 @@ services:
     restart: always
     labels:
       - "traefik.enable=true"
-      # Router HTTP
       - "traefik.http.routers.landing.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
       - "traefik.http.routers.landing.entrypoints=web"
-      
-      # Router HTTPS (SSL automático)
       - "traefik.http.routers.landing-secure.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
       - "traefik.http.routers.landing-secure.entrypoints=websecure"
       - "traefik.http.routers.landing-secure.tls=true"
       - "traefik.http.routers.landing-secure.tls.certresolver=myresolver"
-      
-      # Puerto interno de Nginx
       - "traefik.http.services.landing.loadbalancer.server.port=80"
-    networks:
-      - default
-      - bridge
-
-networks:
-  bridge:
-    external: true
