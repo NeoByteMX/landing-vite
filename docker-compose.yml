@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  landing-page:
+    build: .
+    container_name: landing-vite-container
+    ports:
+      - "80:80"
+    restart: always
