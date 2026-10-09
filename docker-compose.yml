@@ -1,16 +1,22 @@
-version: '3.8'
-
 services:
   landing-page:
     build: .
     container_name: landing-vite-container
     restart: always
+    network_mode: "bridge"
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=bridge"
+      
+      # Router HTTP
       - "traefik.http.routers.landing.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
       - "traefik.http.routers.landing.entrypoints=web"
+      
+      # Router HTTPS (SSL automático)
       - "traefik.http.routers.landing-secure.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
       - "traefik.http.routers.landing-secure.entrypoints=websecure"
       - "traefik.http.routers.landing-secure.tls=true"
       - "traefik.http.routers.landing-secure.tls.certresolver=myresolver"
+      
+      # Puerto interno de Nginx
       - "traefik.http.services.landing.loadbalancer.server.port=80"
