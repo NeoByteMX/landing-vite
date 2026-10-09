@@ -29,6 +29,11 @@ import {
   FileCheck,
   Building2,
   Calendar,
+  Mail,
+  Copy,
+  Check,
+  Send,
+  Loader2,
 } from 'lucide-react';
 
 const CLOUD_JELLYFISH_HERO_IMAGE = '/cloud_jellyfish.jpg';
@@ -760,10 +765,64 @@ spec:
   },
 };
 
+// Configuración de contacto directo & despacho de correos
+const CONSULTANT_EMAIL = 'mmeo1107@gmail.com';
+
+interface AuditFormData {
+  name: string;
+  email: string;
+  company: string;
+  engagementType: string;
+  cloudProvider: string;
+  mainChallenge?: string;
+  notes: string;
+}
+
+function generateMailtoUrl(form: AuditFormData) {
+  const subject = `[Consulta Técnica] ${form.company || 'Empresa'} - ${form.name || 'Cliente'} (${form.engagementType})`;
+  const body =
+`Hola Edwin,
+
+Me gustaría agendar una consulta técnica / llamada 1:1 contigo sobre infraestructura y seguridad cloud.
+
+Detalles de la solicitud:
+--------------------------------------------------
+• Nombre: ${form.name || 'No especificado'}
+• Email de contacto: ${form.email || 'No especificado'}
+• Empresa / Proyecto: ${form.company || 'No especificado'}
+• Formato de colaboración: ${form.engagementType}
+• Proveedor Cloud principal: ${form.cloudProvider}
+• Desafío principal: ${form.mainChallenge || 'Optimización de Costos FinOps'}
+
+Desafío u objetivo técnico:
+${form.notes.trim() ? form.notes.trim() : 'Por detallar en la sesión técnica'}
+
+--------------------------------------------------
+Enviado desde el portal de consultoría de Edwin Martínez (DevSecOps / Cloud).`;
+
+  return `mailto:${CONSULTANT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function generateSummaryText(form: AuditFormData) {
+  return `Solicitud de Consulta Técnica 1:1 para Edwin Martínez (${CONSULTANT_EMAIL}):
+--------------------------------------------------
+• Nombre: ${form.name}
+• Email: ${form.email}
+• Empresa: ${form.company}
+• Formato: ${form.engagementType}
+• Proveedor Cloud: ${form.cloudProvider}
+• Desafío: ${form.notes.trim() ? form.notes.trim() : 'Por detallar en la llamada'}
+--------------------------------------------------`;
+}
+
 export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [auditSubmitted, setAuditSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
+  const [submittedData, setSubmittedData] = useState<AuditFormData | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'sent'>('idle');
   const [activeBlueprint, setActiveBlueprint] = useState<'gitops' | 'kubernetes' | 'security'>('gitops');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [articleFilter, setArticleFilter] = useState<'Todos' | 'Kubernetes' | 'Seguridad Cloud' | 'FinOps'>('Todos');
@@ -867,20 +926,46 @@ export default function App() {
 
   const handleAuditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    const dataToSubmit = { ...auditForm };
+    setSubmittedData(dataToSubmit);
+    setSubmitStatus('sent');
+
+    const mailtoUrl = generateMailtoUrl(dataToSubmit);
+    // Disparamos el cliente de correo predeterminado del usuario (Gmail, Outlook, Mail, etc.)
+    try {
+      window.location.href = mailtoUrl;
+    } catch {
+      // En caso de que el navegador bloquee la apertura automática, se mantienen los botones en el modal
+    }
+
+    setIsSubmitting(false);
     setAuditSubmitted(true);
-    setTimeout(() => {
-      setAuditModalOpen(false);
-      setAuditSubmitted(false);
-      setAuditForm({
-        name: '',
-        email: '',
-        company: '',
-        engagementType: 'Auditoría Técnica Express (1-2 semanas)',
-        cloudProvider: 'AWS',
-        mainChallenge: 'Optimización de Costos FinOps',
-        notes: '',
-      });
-    }, 3500);
+  };
+
+  const handleCopySummary = async (data: AuditFormData) => {
+    try {
+      await navigator.clipboard.writeText(generateSummaryText(data));
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2500);
+    } catch {
+      // Fallback si no está disponible la API del portapapeles
+    }
+  };
+
+  const handleResetForm = () => {
+    setAuditSubmitted(false);
+    setSubmitStatus('idle');
+    setSubmittedData(null);
+    setAuditForm({
+      name: '',
+      email: '',
+      company: '',
+      engagementType: 'Auditoría Técnica Express (1-2 semanas)',
+      cloudProvider: 'AWS',
+      mainChallenge: 'Optimización de Costos FinOps',
+      notes: '',
+    });
   };
 
   return (
@@ -1746,9 +1831,18 @@ export default function App() {
             <span className="text-neutral-500">· Consultor Cloud &amp; DevSecOps (M.Sc. Ciberseguridad)</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-neutral-400">Disponibilidad para nuevos proyectos &amp; auditorías</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-neutral-400">Disponibilidad para nuevos proyectos</span>
+            </div>
+            <a
+              href="mailto:mmeo1107@gmail.com"
+              className="text-neutral-400 hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <Mail className="w-3.5 h-3.5 text-neutral-400" />
+              <span>mmeo1107@gmail.com</span>
+            </a>
           </div>
 
           <div className="text-neutral-500">
@@ -1801,16 +1895,98 @@ export default function App() {
               </div>
 
               {auditSubmitted ? (
-                <div className="py-12 text-center flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4 border border-emerald-500/40">
-                    <CheckCircle2 className="w-6 h-6" />
+                <div className="py-2 text-left flex flex-col">
+                  <div className="flex items-start gap-3.5 mb-4 p-4 rounded-[12px] bg-emerald-500/10 border border-emerald-500/30">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0 mt-0.5">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-base sm:text-lg font-[500] text-white">
+                        ¡Solicitud preparada para enviar a Edwin Martínez!
+                      </h4>
+                      <p className="text-xs text-neutral-300 font-[300] leading-relaxed">
+                        Se han configurado todos los parámetros para <strong className="text-white font-mono">{CONSULTANT_EMAIL}</strong>. Si tu cliente de correo (Gmail, Outlook, Mail) no se abrió automáticamente, haz clic en el botón de abajo o copia el resumen.
+                      </p>
+                    </div>
                   </div>
-                  <h4 className="text-lg font-[500] text-white mb-2">
-                    ¡Mensaje recibido con éxito!
-                  </h4>
-                  <p className="text-xs sm:text-sm font-[300] text-neutral-300 max-w-[380px] leading-relaxed">
-                    Te responderé personalmente en menos de 24 horas con un enlace a mi calendario para coordinar nuestra sesión técnica 1:1.
-                  </p>
+
+                  {/* Ficha técnica con resumen de la llamada solicitada */}
+                  <div className="mb-4 bg-black/80 border border-white/15 rounded-[10px] p-3.5 text-xs font-mono text-neutral-300 space-y-1.5">
+                    <div className="text-[11px] font-sans font-[500] text-neutral-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                      <span>Resumen de la consulta técnica:</span>
+                      <span className="text-emerald-400 text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/40">
+                        Destino: {CONSULTANT_EMAIL}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500 font-sans">Contacto:</span>{' '}
+                      <span className="text-white font-medium">{submittedData?.name}</span>{' '}
+                      <span className="text-neutral-400">&lt;{submittedData?.email}&gt;</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500 font-sans">Empresa / Proyecto:</span>{' '}
+                      <span className="text-white">{submittedData?.company}</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500 font-sans">Modalidad:</span>{' '}
+                      <span className="text-neutral-200">{submittedData?.engagementType}</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500 font-sans">Proveedor Cloud:</span>{' '}
+                      <span className="text-white bg-neutral-900 px-1.5 py-0.5 rounded border border-white/10">{submittedData?.cloudProvider}</span>
+                    </div>
+                    {submittedData?.notes && (
+                      <div className="pt-1.5 border-t border-white/10 text-neutral-300">
+                        <span className="text-neutral-500 font-sans">Desafío:</span> {submittedData?.notes}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botones de acción directa */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                    <a
+                      href={generateMailtoUrl(submittedData || auditForm)}
+                      className="flex items-center justify-center gap-2 bg-white text-black font-[500] text-xs sm:text-sm py-3 px-3 rounded-[8px] hover:bg-neutral-200 transition-colors cursor-pointer text-center"
+                    >
+                      <Mail className="w-4 h-4 text-black" />
+                      <span>Abrir en cliente de correo</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCopySummary(submittedData || auditForm)}
+                      className="flex items-center justify-center gap-2 bg-neutral-900 border border-white/20 text-white font-[500] text-xs sm:text-sm py-3 px-3 rounded-[8px] hover:bg-neutral-800 hover:border-white/40 transition-colors cursor-pointer text-center"
+                    >
+                      {copiedSummary ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-300">¡Copiado al portapapeles!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span>Copiar resumen técnico</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+                    <button
+                      type="button"
+                      onClick={handleResetForm}
+                      className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      ← Enviar otra consulta
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuditModalOpen(false)}
+                      className="bg-neutral-800 text-white px-3.5 py-1.5 rounded-[6px] hover:bg-neutral-700 transition-colors cursor-pointer font-medium"
+                    >
+                      Cerrar ventana
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleAuditSubmit} className="space-y-4">
@@ -1908,13 +2084,28 @@ export default function App() {
                   <div className="pt-2">
                     <button
                       type="submit"
-                      className="w-full bg-white text-black font-[500] text-sm py-3.5 rounded-[8px] hover:bg-neutral-200 transition-colors cursor-pointer"
+                      disabled={isSubmitting}
+                      className="w-full bg-white text-black font-[500] text-sm py-3.5 rounded-[8px] hover:bg-neutral-200 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
                     >
-                      Enviar solicitud directamente a mi bandeja
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-black" />
+                          <span>Procesando solicitud...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 text-black" />
+                          <span>Enviar solicitud a Edwin Martínez</span>
+                        </>
+                      )}
                     </button>
-                    <p className="text-[11px] font-[300] text-neutral-500 text-center mt-2">
-                      Sin spam ni llamadas comerciales invasivas. Trato estrictamente técnico.
-                    </p>
+                    <div className="flex items-center justify-between text-[11px] font-[300] text-neutral-500 mt-2.5 px-0.5">
+                      <span>Sin intermediarios ni spam. Trato técnico directo.</span>
+                      <span className="text-neutral-400 flex items-center gap-1 font-mono">
+                        <Mail className="w-3 h-3" />
+                        {CONSULTANT_EMAIL}
+                      </span>
+                    </div>
                   </div>
                 </form>
               )}
