@@ -5,10 +5,24 @@ services:
     build: .
     container_name: landing-vite-container
     restart: always
-    ports:
-      - "8080:80"  # Exponemos temporalmente en el puerto 8080 de forma local para verificar
     labels:
       - "traefik.enable=true"
+      # Router para HTTP (redirige o atiende)
       - "traefik.http.routers.landing.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
       - "traefik.http.routers.landing.entrypoints=web"
+      
+      # Router para HTTPS (SSL automático)
+      - "traefik.http.routers.landing-secure.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
+      - "traefik.http.routers.landing-secure.entrypoints=websecure"
+      - "traefik.http.routers.landing-secure.tls=true"
+      - "traefik.http.routers.landing-secure.tls.certresolver=myresolver"
+      
+      # Puerto interno de Nginx
       - "traefik.http.services.landing.loadbalancer.server.port=80"
+    networks:
+      - traefik-public # O la red que comparta Traefik
+
+networks:
+  traefik-public:
+    external: true
+    name: traefik-dkfy_default  # (O el nombre de la red del contenedor de Traefik)
