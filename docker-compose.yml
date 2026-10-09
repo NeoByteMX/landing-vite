@@ -5,25 +5,12 @@ services:
     build: .
     container_name: landing-vite-container
     restart: always
+    ports:
+      - "8080:80"  # Exponemos temporalmente en el puerto 8080 de forma local para verificar
     labels:
       - "traefik.enable=true"
-      
-      # 1. Router HTTP (Redirige automáticamente todo el tráfico HTTP a HTTPS)
-      - "traefik.http.routers.landing-http.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
-      - "traefik.http.routers.landing-http.entrypoints=web"
-      - "traefik.http.routers.landing-http.middlewares=redirect-to-https"
-      
-      # Middleware para forzar HTTPS
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-
-      # 2. Router HTTPS (Maneja el dominio principal y www con SSL automático)
       - "traefik.http.routers.landing.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
-      - "traefik.http.routers.landing.entrypoints=websecure"
-      - "traefik.http.routers.landing.tls=true"
-      - "traefik.http.routers.landing.tls.certresolver=myresolver" # (Asegúrate de que 'myresolver' sea el nombre de tu certificate resolver en Traefik)
-      
-      # 3. Puerto interno donde Nginx expone tu app de Vite dentro del contenedor
+      - "traefik.http.routers.landing.entrypoints=web"
       - "traefik.http.services.landing.loadbalancer.server.port=80"
 
 networks:
