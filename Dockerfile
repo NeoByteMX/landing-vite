@@ -1,28 +1,21 @@
-# --- Etapa 1: Construcción de la aplicación con Node.js ---
+# --- Etapa 1: Compilación ---
 FROM node:18-alpine AS builder
-
 WORKDIR /app
 
-# Copiamos los archivos de dependencias
+# Copiamos package.json y package-lock.json (si existe)
 COPY package*.json ./
 
-# Instalamos las dependencias
+# Si tienes package-lock.json usa npm ci, si solo tienes package.json usa npm install
 RUN npm install
 
-# Copiamos el resto del código fuente
+# Copiamos el resto del código
 COPY . .
 
-# Compilamos el proyecto (genera la carpeta dist)
+# Compilamos la aplicación de Vite
 RUN npm run build
 
-# --- Etapa 2: Servidor web ligero con Nginx para producción ---
+# --- Etapa 2: Servidor Nginx ---
 FROM nginx:alpine
-
-# Copiamos los archivos compilados desde la etapa anterior a la ruta pública de Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Exponemos el puerto 80 del contenedor
 EXPOSE 80
-
-# Arrancamos Nginx
 CMD ["nginx", "-g", "daemon off;"]
