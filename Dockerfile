@@ -1,10 +1,8 @@
 # --- Etapa 1: Compilación ---
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-
-# Usamos --legacy-peer-deps para evitar conflictos entre Vite y Tailwind
 RUN npm install --legacy-peer-deps
 
 COPY . .
