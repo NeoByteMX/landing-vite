@@ -16,7 +16,7 @@ services:
       - "traefik.http.routers.landing-secure.rule=host(`cloudsrv.cloud`) || host(`www.cloudsrv.cloud`)"
       - "traefik.http.routers.landing-secure.entrypoints=websecure"
       - "traefik.http.routers.landing-secure.tls=true"
-      - "traefik.http.routers.landing-secure.tls.certresolver=myresolver"
+      - "traefik.http.routers.landing-secure.tls.certresolver=letsencrypt"
       
       # Puerto interno de Nginx
       - "traefik.http.services.landing.loadbalancer.server.port=80"
